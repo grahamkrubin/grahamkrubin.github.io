@@ -1,0 +1,50 @@
+@charset "UTF-8";
+body {}
+
+p {
+    max-width: 70%
+}
+
+img {
+    /*     max-width:70%; max-height:70%; margin:auto; */
+}
+
+ul {
+    list-style: none;
+    margin-left: 0;
+    padding-left: 0;
+}
+
+li {
+    padding-left: 1em;
+    text-indent: -1em;
+}
+
+li:before {
+    content: "~";
+    padding-right: 5px;
+}
+
+.caption {
+    margin-left: 100px;
+    margin-right: 100px;
+    margin-bottom: 100px;
+    font-size: 20px;
+}
+
+.myFooter {
+    font-family: "Helvetica Neue", Helvetica, Arial
+}
+
+.center {
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.rotateimg180 {
+    -webkit-transform: rotate(180deg);
+    -moz-transform: rotate(180deg);
+    -ms-transform: rotate(180deg);
+    -o-transform: rotate(180deg);
+    transform: rotate(180deg);
+}
