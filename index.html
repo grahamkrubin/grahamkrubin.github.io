@@ -1,21 +1,23 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!-- Source: https://stackoverflow.com/questions/17710039/full-page-iframe -->
+<html xmlns="http://www.w3.org/1999/xhtml">
+    <head>
+        <title>Graham Rubin Dot Com</title>
+        <style type="text/css">
+            body, html
+            {
+                margin: 0; padding: 0; height: 100%; overflow: hidden;
+            }
 
-<head>
-    <title>
-        GRDotCom
-    </title>
-</head>
-
-<body background="datboi.gif">
-    <center>
-        <h1>
-            Graham Rubin Dot Com
-        </h1>
-        <p>
-            I'm a cool memer B)
-        </p>
-    </center>
-</body>
-
+            #content
+            {
+                position:absolute; left: 0; right: 0; bottom: 0; top: 0px; 
+            }
+        </style>
+    </head>
+    <body>
+        <div id="content">
+            <iframe width="100%" height="100%" frameborder="0" src="resume2019.pdf" />
+        </div>
+    </body>
 </html>
