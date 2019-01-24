@@ -1,0 +1,463 @@
+{% extends "personal/header.html"%}
+
+<script>
+     {% block jquery %}
+
+    var endpoint = '/api/chart/data/returns'
+    var defaultData = []
+    var labels = []
+    $.ajax({
+        method: "GET",
+        url: endpoint,
+        success: function(data){
+            labels = data.labels
+            defaultData = data.datasets
+            dates = data.dates
+            setChart(labels, defaultData)
+        },
+        error: function(error_data){
+        emptyChart();
+        console.log("error")
+        console.log(error_data)
+        }
+    })
+    // this is the function for setting the main returns graph (leftmost) using chart.js
+    function setChart(labels, dataset){
+         var ctx = document.getElementById("myLineChart").getContext('2d')
+		 var myLineChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dates,
+				datasets:[]
+				/*
+                datasets: [{
+                    label: '# of Votes',
+                    data: [],
+                    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+                        'rgba(255,99,132,1)',
+                        'rgba(54, 162, 235, 1)',
+                        'rgba(255, 206, 86, 1)',
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(153, 102, 255, 1)',
+                        'rgba(255, 159, 64, 1)'
+                    ],
+                    borderWidth: 2
+                }]
+				*/
+            },
+            options: {
+                scales: {
+                    yAxes: [{
+                        ticks: {
+                            beginAtZero:true
+                        }
+                    }],
+					
+                },
+                elements: {
+                    point:{
+                        radius: 0
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Portfolio Historical Returns'
+                }
+            }
+        })
+        //get number of stocks by looking at all the keys in our portfolio
+		 var num_stocks = Object.keys(dataset).length
+		 for(var i = 0; i < num_stocks; i++){
+			var backgroundColorArr = [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ]
+            var borderColorArr = [
+					'rgba(255,99,132,1)',
+					'rgba(54, 162, 235, 1)',
+					'rgba(255, 206, 86, 1)',
+					'rgba(75, 192, 192, 1)',
+					'rgba(153, 102, 255, 1)',
+					'rgba(255, 159, 64, 1)'
+				]
+
+			var toBePushed = {
+				label: labels[i].toUpperCase(),
+				data: dataset[labels[i].toUpperCase()],
+				backgroundColor: backgroundColorArr[i%6],
+				borderColor: borderColorArr[i%6],
+				borderWidth: 1
+			}
+			myLineChart.data.datasets.push(toBePushed)
+			myLineChart.update()
+		 }
+    }
+
+
+
+    // these are variables for generating a markowitz optimized portfolio
+    var newendpoint = '/api/chart/data/markowitz'
+    var labels = []
+    var max_sharpe_allocation
+    var max_sharpe_ret
+    var max_sharpe_vol
+    var min_vol_allocation
+    var min_vol_ret
+    var min_vol_vol
+    // ajax method in order to get the information
+    $.ajax({
+        method: "GET",
+        url: newendpoint,
+        success: function(data){
+            labels = data.labels
+            labels = labels.map(x=>x.toUpperCase())
+            max_sharpe_allocation = data.max_sharpe_allocation
+            max_sharpe_ret = data.max_sharpe_ret
+            max_sharpe_vol = data.max_sharpe_vol
+            document.getElementById('sharpe-ret').innerHTML += (max_sharpe_ret*100).toString() + '%'
+            document.getElementById('sharpe-vol').innerHTML += (max_sharpe_vol*100).toString() + '%'
+            min_vol_allocation = data.min_vol_allocation
+            min_vol_ret = data.min_vol_ret
+            min_vol_vol = data.min_vol_vol
+            document.getElementById('vol-ret').innerHTML += (min_vol_ret*100).toString() + '%'
+            document.getElementById('vol-vol').innerHTML += (min_vol_vol*100).toString() + '%'
+
+            markowitzChart()
+        },
+        error: function(error_data){
+        console.log("error")
+        console.log(error_data)
+        emptyChart();
+        }
+    })
+    // this function sets up both of the pie charts, one for maximized sharpe ratio, one for minimized volatility
+    function markowitzChart(){
+         var sharpe_allocations = []
+         var vol_allocations = []
+         var num_stocks = Object.keys(max_sharpe_allocation).length
+         for(var i = 0; i< num_stocks; i++){
+            sharpe_allocations.push(max_sharpe_allocation[labels[i].toUpperCase()])
+            vol_allocations.push(min_vol_allocation[labels[i].toUpperCase()])
+         }
+
+         var ctx = document.getElementById("mySharpeChart").getContext('2d')
+         var ctx2 = document.getElementById("myVolChart").getContext('2d')
+		 var mySharpeChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+				datasets:[{
+				    data: sharpe_allocations,
+				    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+					'rgba(255,99,132,1)',
+					'rgba(54, 162, 235, 1)',
+					'rgba(255, 206, 86, 1)',
+					'rgba(75, 192, 192, 1)',
+					'rgba(153, 102, 255, 1)',
+					'rgba(255, 159, 64, 1)'
+				    ],
+				    borderWidth: 1,
+				}]
+            },
+            options:{
+                title: {
+                    display: true,
+                    text: 'Maximized Sharpe Ratio Holdings'
+                }
+            }
+        })
+        //this is the aforementioned volatility chart
+        var myVolChart = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: labels,
+				datasets:[{
+				    data: vol_allocations,
+				    backgroundColor: [
+                        'rgba(255, 99, 132, 0.2)',
+                        'rgba(54, 162, 235, 0.2)',
+                        'rgba(255, 206, 86, 0.2)',
+                        'rgba(75, 192, 192, 0.2)',
+                        'rgba(153, 102, 255, 0.2)',
+                        'rgba(255, 159, 64, 0.2)'
+                    ],
+                    borderColor: [
+					'rgba(255,99,132,1)',
+					'rgba(54, 162, 235, 1)',
+					'rgba(255, 206, 86, 1)',
+					'rgba(75, 192, 192, 1)',
+					'rgba(153, 102, 255, 1)',
+					'rgba(255, 159, 64, 1)'
+				    ],
+				    borderWidth: 1,
+				}]
+            },
+            options:{
+                title: {
+                    display: true,
+                    text: 'Minimized Volatility Holdings'
+                }
+            },
+        })
+    }
+    //this function is used for the charts in cases of errors. If there are no portfolios, then all values are just blank
+    function emptyChart(){
+         var ctx = document.getElementById("mySharpeChart").getContext('2d')
+		 var mySharpeChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: ["January", "February", "March", "April", "May", "June", "July"],
+                    datasets: [
+                    // invisible dataset
+                    {
+                        label: "",
+                        fillColor: "rgba(220,220,220,0.0)",
+                        strokeColor: "rgba(220,220,220,0)",
+                        pointColor: "rgba(220,220,220,0)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        // change this data values according to the vertical scale
+                        // you are looking for
+                        data: [65, 59, 80, 81, 56, 55, 40]
+                    },
+                    // your real chart here
+                    {
+                        label: "My dataset",
+                        fillColor: "rgba(220,220,220,0.2)",
+                        strokeColor: "rgba(220,220,220,1)",
+                        pointColor: "rgba(220,220,220,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        data: []
+                    }
+                ]
+            },
+            options:{
+                title: {
+                    display: true,
+                    text: 'Add a stock to see portfolio!'
+                }
+            }
+        })
+        var ctx1 = document.getElementById("myVolChart").getContext('2d')
+		 var myVolChart = new Chart(ctx1, {
+            type: 'pie',
+            data: {
+                labels: ["January", "February", "March", "April", "May", "June", "July"],
+                    datasets: [
+                    // invisible dataset
+                    {
+                        label: "",
+                        fillColor: "rgba(220,220,220,0.0)",
+                        strokeColor: "rgba(220,220,220,0)",
+                        pointColor: "rgba(220,220,220,0)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        // change this data values according to the vertical scale
+                        // you are looking for
+                        data: [65, 59, 80, 81, 56, 55, 40]
+                    },
+                    // your real chart here
+                    {
+                        label: "My dataset",
+                        fillColor: "rgba(220,220,220,0.2)",
+                        strokeColor: "rgba(220,220,220,1)",
+                        pointColor: "rgba(220,220,220,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        data: []
+                    }
+                ]
+            },
+            options:{
+                title: {
+                    display: true,
+                    text: 'Add a stock to see portfolio!'
+                }
+            }
+        })
+        var ctx2 = document.getElementById("myLineChart").getContext('2d')
+		 var myLineChart = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: ["January", "February", "March", "April", "May", "June", "July"],
+                    datasets: [
+                    // invisible dataset
+                    {
+                        label: "",
+                        fillColor: "rgba(220,220,220,0.0)",
+                        strokeColor: "rgba(220,220,220,0)",
+                        pointColor: "rgba(220,220,220,0)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        // change this data values according to the vertical scale
+                        // you are looking for
+                        data: [65, 59, 80, 81, 56, 55, 40]
+                    },
+                    // your real chart here
+                    {
+                        label: "My dataset",
+                        fillColor: "rgba(220,220,220,0.2)",
+                        strokeColor: "rgba(220,220,220,1)",
+                        pointColor: "rgba(220,220,220,1)",
+                        pointStrokeColor: "#fff",
+                        pointHighlightFill: "#fff",
+                        pointHighlightStroke: "rgba(220,220,220,1)",
+                        data: []
+                    }
+                ]
+            },
+            options:{
+                title: {
+                    display: true,
+                    text: 'Add a stock to see portfolio!'
+                }
+            }
+        })
+    }
+    // this is for filling up the table for weekly prices/returns
+    var lastendpoint = '/api/chart/data/returntable/'
+    var stocks = []
+    var returns = []
+    var returnDates = []
+    $.ajax({
+        method: "GET",
+        url: lastendpoint,
+        success: function(data){
+            stocks = data.labels
+            returns = data.datasets
+            returnDates = data.dates
+            document.getElementById('weekly-returns').innerHTML += returns
+
+        },
+        error: function(error_data){
+        console.log("error")
+        console.log(error_data)
+        }
+    })
+    //similarly, this is for the ranked returns
+    var rankendpoint = '/api/chart/data/returnrank/'
+    var return_ranks;
+    $.ajax({
+        method: "GET",
+        url: rankendpoint,
+        success: function(data){
+            return_ranks = data.datasets
+            document.getElementById('return-rankings').innerHTML += return_ranks
+
+        },
+        error: function(error_data){
+        console.log("error")
+        console.log(error_data)
+        }
+    })
+    //and this one is for daily information
+    var dailyEndpoint = '/api/chart/data/earnings/'
+    var dailyRankings;
+    $.ajax({
+        method: "GET",
+        url: dailyEndpoint,
+        success: function(data){
+            dailyRankings = data.datasets
+            document.getElementById('daily-rankings').innerHTML += dailyRankings
+
+        },
+        error: function(error_data){
+        console.log("error")
+        console.log(error_data)
+        }
+    })
+
+
+
+
+{% endblock %}
+</script>
+
+
+{% block content %}
+
+{% if user.is_authenticated %} <!-- this will check if a user is authenticated already, if not, they can't see this page
+-->
+    <h3>Welcome to your Portfolio's main page.</h3>
+    <h5>Please wait momentarily to see your optimized portfolio - We need to generate lots of simulations! :-) </h5>
+    <div class="row">
+        <div class="col-sm-12" >
+            <div class="col-sm-4">
+                <canvas id="myLineChart" width="400" height="400"></canvas>
+
+            </div>
+            <div class="col-sm-4">
+                <canvas id="mySharpeChart" width="400" height="400"></canvas><br>
+                <div class="text-center" id="sharpe-ret">Expected Return: </div>
+                <div class="text-center" id="sharpe-vol">Expected Volatility: </div>
+            </div>
+            <div class="col-sm-4">
+                <canvas id="myVolChart" width="400" height="400"></canvas><br>
+                <div class="text-center" id="vol-ret">Expected Return: </div>
+                <div class="text-center" id="vol-vol">Expected Volatility: </div>
+            </div>
+        </div>
+    </div>
+    <!-- that was the first row of charts, this is for first row of tables-->
+    <br>
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="col-sm-6" id="daily-rankings">
+                <h3 class="center-text">Daily Return:</h3>
+            </div>
+            <div class="col-sm-6" id="return-rankings">
+                <h3 class="center-text">Return Ranks:</h3>
+            </div>
+        </div>
+    </div>
+    <!-- last row of tables-->
+    <br>
+    <div class="row">
+        <div class="col-sm-12" id="weekly-returns">
+                <h3 class="center-text">Recent Prices:</h3>
+        </div>
+    </div>
+{% else %}
+<!-- this is for if they weren't logged in -->
+    <div class="row">
+        <div class="col-sm-12">
+            <h3>Welcome to Portfolio optimization site.</h3>
+            <br>
+            <p>To use all of the functionality on this site, please register using the button on the top right.</p>
+        </div>
+    </div>
+{% endif %}
+
+
+
+
+
+
+
+{% endblock %}

@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <title>Better than FB messger, but then again what isn't</title>
+      <style>
+         body{background-color:LavenderBlush;}
+         h1{color: Aqua;}
+         h3{color: PaleGreen;}
+         button{
+            background-color: Bisque;
+            color:black;
+            padding:20px;
+            text-align:center;
+            margin: 4px 2px;
+            border-radius: 12px;
+         }
+         .emoji-icon{
+            
+            vertical-align: top;
+         }
+         img{
+            height:50px;
+            width:50px;
+            vertical-align: top;
+         }
+      </style>
+      <script src="/socket.io/socket.io.js"></script>
+      <script>
+         
+         let username;
+         let rooms_arr = [];
+         let users_arr = []; //need to reset on chatroom change
+         let current_chatroom = "";
+         var socketio = io.connect();
+         let logged = false;
+         let onceCalled = false;
+         let isCreator = false;
+         let usernameTaken = false;
+         let private_rooms_dict = {};
+         
+         socketio.on("dm_to_client", function(data){
+            alert(data["user"]+": "+data["msg"]);
+
+            });
+         
+         socketio.on("message_to_client",function(data) { //messages to client
+         //Append an HR thematic break and the escaped HTML of the new message
+         console.log("chatroom is:");
+         //console.log(data["chatroom"]);
+         usersplit = data["message"].split(':');
+         user = usersplit[0];
+         full_message = usersplit[1];
+         decorsplit = full_message.split('/');
+         console.log(decorsplit)
+         let message;
+         let date = new Date();
+         if(decorsplit.length == 2 || decorsplit.length ==1){
+            message = document.createTextNode("("+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+") " + user + ": "+ decorsplit[decorsplit.length-1]);
+            }
+         if(decorsplit.length == 4){
+            message = document.createElement("p");
+            message.innerText = "("+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+") " + user + ": "+ decorsplit[3];
+            //message = document.createTextNode(decorsplit[3]);
+            message.style.color = decorsplit[1];
+            message.style.textDecoration = decorsplit[2];
+         }
+         if(decorsplit.length ==3){
+            message = document.createElement("p");
+            message.innerText = "("+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+") " + user + ": "+ decorsplit[2];
+            message.style.color = decorsplit[1];
+         }
+         if(data["chatroom"] == current_chatroom){
+            document.getElementById("chatlog").prepend(document.createElement("hr"));
+            document.getElementById("chatlog").prepend(message);
+            
+         }
+         else{
+            console.log("Not ur room!");
+         }
+      });
+         
+      socketio.on("emoji_to_client", function(data){
+         let emoji = data["emoji"];
+         let user = data["user"];
+         let date = new Date();
+         if(data["chatroom"]==current_chatroom){
+            document.getElementById("chatlog").prepend(document.createElement("hr"));
+            if(emoji=="smiley"){
+               let msg_img = document.createElement("img");
+               msg_img.src = "http://www.myiconfinder.com/uploads/iconsets/256-256-1ff6e565176b38899fd667fd744a2668-emoticons.png";
+               msg_img.alt = "smiley";
+               document.getElementById("chatlog").prepend(msg_img);
+               document.getElementById("chatlog").prepend(document.createTextNode("("+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+") " + user+": "));
+            }
+            if(emoji=="sad"){
+               let msg_img = document.createElement("img");
+               msg_img.src = "https://www.emoji.co.uk/files/apple-emojis/smileys-people-ios/57-crying-face.png";
+               msg_img.alt = "sad";
+               document.getElementById("chatlog").prepend(msg_img);
+               document.getElementById("chatlog").prepend(document.createTextNode("("+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+") " + user+": "));
+            }
+            if(emoji=="angry"){
+               let msg_img = document.createElement("img");
+               msg_img.src = "https://www.emoji.co.uk/files/apple-emojis/smileys-people-ios/39-angry-face.png";
+               msg_img.alt = "angry";
+               document.getElementById("chatlog").prepend(msg_img);
+               document.getElementById("chatlog").prepend(document.createTextNode("("+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+") " + user+": "));
+            }
+            if(emoji=="laugh"){
+               let msg_img = document.createElement("img");
+               msg_img.src = "https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/facebook/65/face-with-tears-of-joy_1f602.png";
+               msg_img.alt = "laugh";
+               document.getElementById("chatlog").prepend(msg_img);
+               document.getElementById("chatlog").prepend(document.createTextNode("("+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+") " + user+": "));
+            }
+            if(emoji=="poop"){
+               let msg_img = document.createElement("img");
+               msg_img.src = "https://d1j8pt39hxlh3d.cloudfront.net/emoji/emojione/3.0/png/128/1f4a9.png";
+               msg_img.alt = "poop";
+               document.getElementById("chatlog").prepend(msg_img);
+               document.getElementById("chatlog").prepend(document.createTextNode("("+date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+") " + user+": "));
+            }
+            
+            
+         }
+         })
+      
+       socketio.on("chatroom_to_client",function(data) {
+         if(logged){
+            let chatroom_name = data["chatroom"]
+            rooms_arr.push(chatroom_name);
+            if(data["hasPass"] == "true"){
+               private_rooms_dict[chatroom_name] = true;
+            }
+            else{
+               private_rooms_dict[chatroom_name] = false;
+            }
+            showMainPage();
+         }
+      });
+       
+      socketio.on("sent_chatrooms", function(data){
+         if(logged && !onceCalled){
+            console.log("called this sent chatrooms");
+            console.log(data["chatroomlist"]);
+            let chatrooms_split_arr = data["chatroomlist"].split(",");
+            for(let i = 0; i<chatrooms_split_arr.length; i++){
+               if(chatrooms_split_arr[i]!= "" && chatrooms_split_arr[i]!= null){
+                  rooms_arr.push(chatrooms_split_arr[i]);
+               }
+            }
+            let private_split_arr = data["privatelist"].split(",");
+            for(let i = 0; i<private_split_arr.length; i++){
+               if(private_split_arr[i]!= "" && private_split_arr[i]!= null){
+                  private_rooms_dict[private_split_arr[i]] = true;
+               }
+            }
+            console.log(rooms_arr)
+            if(username!="" && username!=null){
+             showMainPage();
+            }
+            onceCalled = true;
+         }
+        
+        //
+        });
+       
+      socketio.on("user_to_chatroom_to_client", function(data) {
+        if(current_chatroom == data["chatroom"]){
+      
+            //isCreator = Boolean(data["isCreator"])
+            document.getElementById("message_input").style.display='block';
+            document.getElementById("message_label").style.display = 'block';
+            document.getElementById("smiley_emoji").style.display="inline-block";
+            document.getElementById("sad_emoji").style.display="inline-block";
+            document.getElementById("angry_emoji").style.display="inline-block";
+            document.getElementById("laugh_emoji").style.display="inline-block";
+            document.getElementById("poop_emoji").style.display="inline-block";
+         document.getElementById("send_button").style.display="inline-block";
+         document.getElementById("chatlog").style.display="block";
+         document.getElementById("users_in_room").style.display = 'block';
+            console.log("IS CREATOR: :: : :")
+            console.log(data['creator'])
+            users_arr = [];
+            let chatroom_users_split_arr = data["chatroom_users"].split(",");
+            for(let i = 0; i<chatroom_users_split_arr.length; i++){
+                   if(chatroom_users_split_arr[i]!= "" && chatroom_users_split_arr[i]!= null){
+                      users_arr.push(chatroom_users_split_arr[i]);
+                   }
+                }
+            console.log(users_arr);
+            
+            document.getElementById("users_in_room").innerHTML = "<h3>Users in room:</h3>";
+            
+            if (username == data["creator"]) {
+                // console.log(data["user"] +"is the current user");
+                for(let i=0; i<users_arr.length; i++){
+                    if(username!=users_arr[i]){
+                        document.getElementById("users_in_room").innerHTML += "<p>"+users_arr[i]+
+                        "<button class='user_button' id='DM_"+ String(i)+"' onclick='slideInDms("+String(i)+
+                        ")'>Slide in Dms</button> <button class='kick_button' id='kick_"+String(i)+"' onclick='kick("+String(i)+")'>Kick this guy</button>   <button class='user_button' id='ban_"+String(i)+"' onclick='ban("+String(i)+")'>Ban this bitch</button>";
+                     }
+                     else{
+                        document.getElementById("users_in_room").innerHTML += "<p>"+users_arr[i]+"</p>";
+                     } 
+                }
+                isCreator = false;
+            }
+            else{
+                for(let i=0; i<users_arr.length; i++){
+                  if(username!=users_arr[i]){
+                     document.getElementById("users_in_room").innerHTML += "<p>"+users_arr[i]+"   <button class='user_button' id='DM_"+ String(i)+"' onclick='slideInDms("+String(i)+")'>Slide in Dms</button></p>";
+                  }
+                  else{
+                     document.getElementById("users_in_room").innerHTML += "<p>"+users_arr[i]+"</p>";
+                  }
+                }
+            }
+            
+        }
+      });
+      
+      socketio.on("post_password_check_client", function(data){
+         console.log("got past password  check")
+         let passed = data["passed"];
+         let alloweduser = data["alloweduser"]
+         if(passed == "true" && username == alloweduser){
+            console.log("called join chat room")
+               let chatlog = document.getElementById("chatlog");
+               chatlog.innerHTML = "";
+               let chatrooms_created = document.getElementsByClassName("chatroom_button");
+               for(let i = 0; i<chatrooms_created.length; i++){
+                  if(chatrooms_created[i].checked){
+                        if (current_chatroom != "") {
+                           socketio.emit("remove_user_from_chatroom", {chatroom:current_chatroom, user:username, kick_ban_cond: ""});
+                        }
+                        users_arr = [];
+                        current_chatroom = chatrooms_created[i].value;
+      
+                        console.log("the inner html of the buttons: " + String(document.getElementById("users_in_room").innerHTML));
+                        socketio.emit("user_to_chatroom_to_server", {chatroom:current_chatroom, user:username});
+                        console.log("should have emitted register user");
+                  }
+               }
+               console.log("checked one is: ")
+               console.log(current_chatroom);
+               if(current_chatroom == ""){
+                  alert("choose a chatroom to join or make a new one!");
+                  return;
+               }
+               document.getElementById("message_input").style.display='block';
+               document.getElementById("message_label").style.display='block';
+               document.getElementById("smiley_emoji").style.display="inline-block";
+               document.getElementById("sad_emoji").style.display="inline-block";
+               document.getElementById("angry_emoji").style.display="inline-block";
+               document.getElementById("laugh_emoji").style.display="inline-block";
+               document.getElementById("poop_emoji").style.display="inline-block";
+               document.getElementById("send_button").style.display="inline-block";
+               document.getElementById("chatlog").style.display="block";
+               document.getElementById("users_in_room").style.display = "block";
+
+               return false;
+         }
+         if(passed == "false" && username == alloweduser ){
+            alert("Wrong password");
+
+         }
+        
+         });
+      socketio.on("user_exists_check", function(data){
+            usernameTaken = data["userExists"];
+            console.log("user exists!");
+            console.log(usernameTaken);
+            if (usernameTaken == "false" && !logged && username == data["user"]){
+                logged = true;
+                requestChatrooms();
+                showMainPage();
+            }
+            if(usernameTaken == "true" && !logged && username == data["user"]){
+                alert("USERNAME TAKEN");
+    
+            }
+      });
+
+       socketio.on("receive_updated_chatroom_users", function(data) {
+            if(current_chatroom == data["chatroom"]){
+                  users_arr = [];
+                  let chatroom_users_split_arr = data["chatroom_users"].split(",");
+                  for(let i = 0; i<chatroom_users_split_arr.length; i++){
+                         if(chatroom_users_split_arr[i]!= "" && chatroom_users_split_arr[i]!= null){
+                            users_arr.push(chatroom_users_split_arr[i]);
+                         }
+                  }
+                  console.log(users_arr);
+                       
+                  document.getElementById("users_in_room").innerHTML = "<h3>Users in room:</h3>";
+                       
+                  if (username == data["creator"]) {
+                           // console.log(data["user"] +"is the current user");
+                        for(let i=0; i<users_arr.length; i++){
+                           if(username!=users_arr[i]){
+                              document.getElementById("users_in_room").innerHTML += "<p>"+users_arr[i]+
+                        "<button class='user_button' id='DM_"+ String(i)+"' onclick='slideInDms("+String(i)+
+                        ")'>Slide in Dms</button> <button class='kick_button' id='kick_"+String(i)+"' onclick='kick("+String(i)+")'>Kick this guy</button>   <button class='user_button' id='ban_"+String(i)+"' onclick='ban("+String(i)+")'>Ban this bitch</button>";
+                           }
+                           else{
+                              document.getElementById("users_in_room").innerHTML += "<p>"+users_arr[i]+"</p>";
+                              } 
+                        }
+                        isCreator = false;
+                     }
+                     else{
+                        for(let i=0; i<users_arr.length; i++){
+                           if(username!=users_arr[i]){
+                               document.getElementById("users_in_room").innerHTML += "<p>"+users_arr[i]+"   <button class='user_button' id='DM_"+ String(i)+"' onclick='slideInDms("+String(i)+")'>Slide in Dms</button></p>";
+                           }
+                           else{
+                              document.getElementById("users_in_room").innerHTML += "<p>"+users_arr[i]+"</p>";
+                           }
+                        }
+                     }
+                       
+                   }
+       });
+
+       socketio.on("reset_user_to_main_page", function(data) {
+         let banned_person = data["banned_user"]
+         if(banned_person==username){
+            alert("YOU WERE BANNED PREVIOUSLY FROM THIS CHATROOM")
+            current_chatroom = "";
+            document.getElementById("message_input").style.display='none';
+            document.getElementById("message_label").style.display='none';
+            document.getElementById("smiley_emoji").style.display='none';
+            document.getElementById("sad_emoji").style.display='none';
+            document.getElementById("angry_emoji").style.display='none';
+            document.getElementById("laugh_emoji").style.display='none';
+            document.getElementById("poop_emoji").style.display='none';
+            document.getElementById("send_button").style.display="none";
+            document.getElementById("chatlog").style.display = "none";
+            document.getElementById("users_in_room").style.display = "none";
+            showMainPage();
+         }
+            
+         
+         if(banned_person == ""){
+
+            alert("You have been kicked/banned from this chatroom. If you were kicked, you can rejoin; if banned, you can't")
+            current_chatroom = "";
+            document.getElementById("message_input").style.display='none';
+            document.getElementById("message_label").style.display='none';
+            document.getElementById("smiley_emoji").style.display='none';
+            document.getElementById("sad_emoji").style.display='none';
+            document.getElementById("angry_emoji").style.display='none';
+            document.getElementById("laugh_emoji").style.display='none';
+            document.getElementById("poop_emoji").style.display='none';
+            document.getElementById("send_button").style.display="none";
+            document.getElementById("chatlog").style.display = "none";
+            document.getElementById("users_in_room").style.display = "none";
+            showMainPage();
+         }
+ 
+       });
+       
+      function requestChatrooms(){
+         socketio.emit("request_chatrooms",{message: "new user"});
+       }
+
+      function sendMessage(){
+         var msg = document.getElementById("message_input").value;
+         // alert("c: " + username);
+         msg = (username + ": " + msg);
+ 
+         socketio.emit("message_to_server", {message:msg, chatroom:current_chatroom, user:username});
+         document.getElementById("message_input").value = "";
+      }
+      function sendEmoji(emoji){
+         console.log(emoji)
+         socketio.emit("emoji_to_server", {emote:String(emoji), chatroom:current_chatroom, user:username})
+      }
+      function login(){
+        username = document.getElementById("username").value;
+        if(username == ""){
+          alert("Your username cannot be blank!");
+          document.getElementById("username").value = "";
+          return;
+        }
+        else{
+          socketio.emit("user_to_server", {user:username});
+        }
+      }
+      
+      function showMainPage() {
+         document.getElementById("chatroom_creation").style.display = 'block';
+         document.getElementById("login_info").hidden = true;
+         document.getElementById("join_chatroom").style.display = 'block';
+         document.getElementById("chatroom_label").style.display = 'block';
+        
+        // alert(username);
+         let chatrooms_list = document.getElementById("join_chatroom");
+         chatrooms_list.innerHTML = "<button id='join_button' onclick = 'joinChatroom()' style='display:none'>join</button>";
+         if(rooms_arr.length > 0){
+            for(let i = 0; i <rooms_arr.length; i++){
+            chatrooms_list.innerHTML = "<input type='radio' name = 'chatroom_button' class='chatroom_button' value='"+rooms_arr[i]+"'>" + rooms_arr[i] + "<br>" + chatrooms_list.innerHTML;
+            }
+           document.getElementById("join_button").style.display = 'inline-block';
+        }
+        else{
+         chatrooms_list.innerHTML += "<div>You must create a new chatroom!</div>";
+        }
+      }
+      
+      
+      function createChatroom(){
+         let newChatroomName = document.getElementById("new_room_name").value;
+         let newPass = document.getElementById("room_pass").value;
+         console.log(newChatroomName);
+         let checker = false;
+         for(let i = 0; i<rooms_arr.length; i++){
+            if(rooms_arr[i]==newChatroomName){
+               checker = true;
+            }
+         }
+         if(newChatroomName == ""){
+            alert("Chatroom name cannot be empty!!");
+ 
+            return;
+         }
+         if(checker){
+            alert("Chatroom already exists!");
+
+            return;
+         }
+         else{
+            if(newPass == "" || newPass == null){
+               socketio.emit("chatroom_to_server", {chatroom:newChatroomName, user:username, pass: ""});
+               document.getElementById("new_room_name").value = "";
+            }
+            else{
+               socketio.emit("chatroom_to_server", {chatroom:newChatroomName, user:username, pass: newPass});
+               document.getElementById("new_room_name").value = "";
+               document.getElementById("room_pass").value = "";
+            }
+            alert("Chatroom created!");
+         }  
+      }
+      
+      function joinChatroom(){
+         // alert("b: " + username);
+         //check if user is banned.
+         console.log("called join chat room")
+         let chatlog = document.getElementById("chatlog");
+         chatlog.innerHTML = "";
+         let chatrooms_created = document.getElementsByClassName("chatroom_button");
+         for(let i = 0; i<chatrooms_created.length; i++){
+            if(chatrooms_created[i].checked){
+               if(private_rooms_dict[chatrooms_created[i].value] == true){
+                  let password = prompt("What is the password for this room?");
+                  console.log("PROMPT IS: "+password);
+                  socketio.emit("check_password", {chatroom:chatrooms_created[i].value, pass: password, user:username});
+                  return;
+               }
+               else{
+                  if (current_chatroom != "") {
+                     socketio.emit("remove_user_from_chatroom", {chatroom:current_chatroom, user:username, kick_ban_cond: ""});
+                  }
+                  users_arr = [];
+                  current_chatroom = chatrooms_created[i].value;
+
+                  console.log("the inner html of the buttons: " + String(document.getElementById("users_in_room").innerHTML));
+                  socketio.emit("user_to_chatroom_to_server", {chatroom:current_chatroom, user:username});
+
+                  console.log("should have emitted register user");
+               }
+            }
+         }
+         console.log("checked one is: ")
+         console.log(current_chatroom);
+         if(current_chatroom == ""){
+            alert("choose a chatroom to join or make a new one!");
+            return;
+         }
+
+         return false;
+      }
+  
+  
+      function slideInDms(usernumber){
+        let recipient = users_arr[Number(usernumber)];
+        console.log(recipient);
+        if(recipient == username){
+         alert("You can't dm yourself!");
+         return;
+        }
+        let message = prompt("What would you like to send "+recipient);
+        if(message == null || message == ""){
+         alert("You sent nothing!")
+         return;
+        }
+        else{
+         console.log("emitted")
+            socketio.emit("dm_to_server", {msg: message, user: username, recip: recipient});
+
+        }
+        
+      }
+      
+      function kick(usernumber){
+         //socketio.emit("kick_to_server", {chatroom: current_chatroom, user: users_arr[Number(usernumber)]});
+         socketio.emit("remove_user_from_chatroom", {chatroom:current_chatroom, user:users_arr[Number(usernumber)], kick_ban_cond: "kick"});
+      }
+      function ban(usernumber){
+         socketio.emit("remove_user_from_chatroom", {chatroom:current_chatroom, user:users_arr[Number(usernumber)], kick_ban_cond: "ban"});
+      }
+      
+      </script>
+   </head>
+   
+   <body>
+      <h1>THE BEST MESSAGING APP</h1>
+      <div id="login_info">
+         <h5>Set your name:</h5>
+         <input type="text" id="username"/>
+         <button id = "main_page" onclick = "login()" >C'mon in!</button>
+      </div>
+      <br>
+      
+      <div id="chatroom_creation" style="display:none">
+         <h3>Create a chatroom!</h3>
+         Chatroom name: <input type="text" id="new_room_name" placeholder="Enter chatroom name"/><br>
+         Password: <input type="password" id="room_pass" placeholder="Enter password(optional)"><br>
+         <button id="create_chatroom" onclick = "createChatroom()">Create Chatroom!</button>
+      </div>
+      <br>
+      <h3 id="chatroom_label" style="display:none">Chatrooms:</h3>
+      <div id="join_chatroom" style="display:none">
+            <button id="join_button" onclick = "joinChatroom()" style="display:inline-block">join</button>
+
+      </div>
+      
+      <div id="users_in_room" style="display:none; position:absolute; top:20px; right:100px">
+         <h3>Users in room:</h3>
+      </div>
+      <h3 id="message_label" style="display:none">Enter Message (add decor with "/[color]/[text-decoration]/message" must have color for text-decoration) :</h3>
+      <input type="text" id="message_input" placeholder="Enter Message Here" style="display:none"/>
+      <button id="send_button" onclick = "sendMessage();" style="display:none">send</button>
+      <button class = "emoji-icon" id="smiley_emoji" onclick="sendEmoji('smiley');" style="display:none"><img src="http://www.myiconfinder.com/uploads/iconsets/256-256-1ff6e565176b38899fd667fd744a2668-emoticons.png" alt="smiley"></button>
+      <button class = "emoji-icon" id="sad_emoji" onclick="sendEmoji('sad');" style="display:none"><img src="https://www.emoji.co.uk/files/apple-emojis/smileys-people-ios/57-crying-face.png" alt="sad"></button>
+      <button class = "emoji-icon" id="angry_emoji" onclick="sendEmoji('angry');" style="display:none"><img src="https://www.emoji.co.uk/files/apple-emojis/smileys-people-ios/39-angry-face.png" alt="angry"></button>
+      <button class = "emoji-icon" id="laugh_emoji" onclick="sendEmoji('laugh');" style="display:none"><img src="https://emojipedia-us.s3.dualstack.us-west-1.amazonaws.com/thumbs/160/facebook/65/face-with-tears-of-joy_1f602.png" alt="laugh"></button>
+      <button class = "emoji-icon" id="poop_emoji" onclick="sendEmoji('poop');" style="display:none"><img src="https://d1j8pt39hxlh3d.cloudfront.net/emoji/emojione/3.0/png/128/1f4a9.png" alt="poop"></button>
+      
+      <div id="chatlog" style="display:none"></div>
+      
+      
+   </body>
+   
+</html>

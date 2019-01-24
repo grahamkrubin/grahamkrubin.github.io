@@ -1,0 +1,10 @@
+{% block content %}
+    {% if user.is_authenticated %}
+        Hi {{ user.username }}!
+        <a href="/password_change/" class="badge badge-danger">Change Password</a>
+        <a href="{% url 'logout' %}" class="badge badge-primary">Log Out</a>
+    {% else %}
+        <a href="/login/" class="badge badge-primary">Log In</a>
+        <a href="/register/" class="badge badge-success">Registration</a>
+    {% endif %}
+{% endblock %}

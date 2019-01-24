@@ -1,0 +1,16 @@
+{
+  "name": "module_6",
+  "version": "1.0.0",
+  "description": "Commit delet System32",
+  "main": "chat-server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node chat-server.js"
+  },
+  "dependencies": {
+    "mime": "~1.6.0",
+    "socket.io": "~0.9.16"
+  },
+  "author": "Graham Rubin & Robert Landlord",
+  "license": "ISC"
+}

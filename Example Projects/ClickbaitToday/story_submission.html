@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <title>story submitting page</title>
+    </head>
+    <body>
+        <!--new user button-->
+        <form name="story_submit" id="story_submit" action="story_submission.php" method="post">
+            <p>
+               <label>
+                    Title:
+                </label>
+                <input type="text" name="story_title">
+               
+                <br>
+                <label>
+                    Story:
+                </label>
+                
+                <div>
+                <textarea name="storybox" id="storybox" form="story_submit" rows = "5" cols = "60" placeholder="Write story here..."></textarea>
+                </div>
+                
+                <br>
+                <label>
+                    Link (optional):
+                </label>
+                <input type="text" name="link">
+                <br>
+                <br>
+                <input type="hidden" name="token" value="<?php echo $_SESSION['token'];?>" />
+                <input type="submit" name="newusersubmit" value="Submit"> 
+            </p>
+        </form>
+ 
+    </body>
+</html>
+    

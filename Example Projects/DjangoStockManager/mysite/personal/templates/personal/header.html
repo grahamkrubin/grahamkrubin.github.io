@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!--|	|	|		_
+	|___|	|	*	 |
+	|	|	|	*	_|
+	|	|	|
+-->
+<html lang="en">
+
+<head>
+	<title>Portfolio Optimization</title>
+	<meta charset="utf-8" />
+	{% load staticfiles %}
+	<link rel="stylesheet" href="{% static 'personal/css/bootstrap.min.css' %}" type = "text/css"/>
+	<meta name="viewport" content = "width=device-width, initial-scale=1.0">
+
+
+	<style>
+		html,
+		body {
+		  height:100%
+		}
+	</style>
+</head>
+
+<body class="body" style="background-color:#f6f6f6">
+	<div class="container-fluid" style="min-height:95%; ">
+		<div class="row">
+			  <div class="col-sm-2">
+				  <br>
+				  <div class="text-center">
+					<img src="{% static 'personal/img/profile.jpg' %}" class="responsive-img" style='max-height:100px;' alt="face">
+				  </div>
+			  </div>
+			  <div class="col-sm-6">
+				  <br>
+				  <div class="text-center">
+				  <h3>Portfolio Optimization</h3>
+				  </div>
+			  </div>
+			<!-- this should change if logged in vs if not logged in-->
+			<div class="col-sm-4">
+				<br>
+				<div class="text-center">
+					<h2>
+						{% include 'personal/includes/logbuttons.html' %}
+					</h2>
+				</div>
+			</div>
+
+		</div><hr>
+
+		<div class="row">
+		  <div class="col-sm-2">
+		  <br>
+
+		  <br>
+		   <!-- Great, til you resize. -->
+			<!--<div class="well bs-sidebar affix" id="sidebar" style="background-color:#fff">-->
+			<div class="well bs-sidebar" id="sidebar" style="background-color:#fff">
+			  <ul class="nav nav-pills nav-stacked">
+				<li><a href='/'>Home</a></li>
+				  {% if user.is_authenticated %}
+						<li><a href='/addstock/'>Add Stock</a></li>
+				  		<li><a href='/liquidate/'>Liquidate Portfolio</a></li>
+				  {% endif %}
+				<li><a href='/findstock/'>Find Stock</a></li>
+				<li><a href='/contact/'>Contact</a></li>
+			  </ul>
+			</div> <!--well bs-sidebar affix-->
+		  </div> <!--col-sm-2-->
+		  <div class="col-sm-10">
+		  
+			<div class='container-fluid'>
+			<br><br>
+			   {% block content %}
+			   {% endblock %}	
+			</div>
+		  </div>
+		</div> 
+	</div>
+	<footer>
+		<div class="container-fluid" style='margin-left:15px'>
+			<p><a href="#" target="blank">Contact</a> | <a href="#" target="blank">LinkedIn</a> | <a href="#" target="blank">Twitter</a> | <a href="#" target="blank">Google+</a></p>
+		</div>
+	</footer>	
+		{% include 'personal/includes/js.html' %}
+	<script>
+		$(document).ready(function(){
+			{% block jquery %}{% endblock %}
+		})
+	</script>
+</body>
+
+</html>

@@ -1,0 +1,36 @@
+{% extends "personal/header.html" %}
+{% block title %}Find a Stock!{% endblock %}
+<script>
+
+</script>
+{% block content %}
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-sm-12 col-md-7">
+                    <div class="panel panel-default">
+                        <div class="panel-body">
+                        <h3>Find a Stock</h3>
+                            {% if error_message %}
+                                <p><strong>{{error_message|safe|linebreaks}}</strong></p>
+                            {% endif %}
+                            <form class="form-horizontal" method="post" enctype="multipart/form-data">
+                                {% csrf_token %}
+                                {% include 'personal/form-template.html' %}
+                                <div class="form-group">
+                                    <div class="col-sm-offset-2 col-sm-10">
+                                        <button type="submit" class="btn btn-success">Find stock!</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-sm-12 center-text" id="info-table">
+                    <h3 class="center-text">{{label}}</h3>
+                {{ dataset |safe}}
+                </div>
+            </div>
+        </div>
+{% endblock %}

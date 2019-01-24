@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <link rel="stylesheet" href="allstyles.css">
+        <title>Login</title>
+        <!-- -->
+    </head>
+    <body>
+        <form name="usercheck" action="passwordcheck.php" method="post">
+            <!--username button-->
+            <p>
+                <label>
+                    Please enter your username:
+                </label>
+                <input type="text" name="username">
+                <br>
+                <label>
+                    Password:
+                </label>
+                <!-- password-->
+                <input type="password" name="password">
+                <input type="submit" name="usersubmit" value="Log in!">
+            </p>    
+        </form>
+        
+        <form name="new_user_form" action="http://ec2-18-191-25-109.us-east-2.compute.amazonaws.com/~grahamrubin/ClickbaitToday/registration.html">
+            <input type="submit" value="New Users"/>
+        </form>
+</html>
+    
